@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+
+  mongo:
+    image: mongo:7.0
+    container_name: mongo
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=db
+      - MONGO_INITDB_ROOT_USERNAME=username
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ./mongodb:/data/db
+
+  gotenberg:
+    image: gotenberg/gotenberg:7.10
+    container_name: gotenberg
+    ports:
+      - 3000:3000
