@@ -7,10 +7,10 @@
 	},
 	"item": [
 		{
-			"name": "topic",
+			"name": "Topic",
 			"item": [
 				{
-					"name": "add topic",
+					"name": "addTopic",
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -41,7 +41,35 @@
 					"response": []
 				},
 				{
-					"name": "rename topic",
+					"name": "getAllTopics",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "http://localhost:8080/topic-api/v1/topics",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"topic-api",
+								"v1",
+								"topics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "renameTopic",
 					"request": {
 						"method": "PUT",
 						"header": [],
@@ -77,7 +105,7 @@
 					"response": []
 				},
 				{
-					"name": "delete topic",
+					"name": "deleteTopic",
 					"request": {
 						"method": "DELETE",
 						"header": [],
@@ -106,42 +134,14 @@
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "get all topics",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
-					"request": {
-						"method": "GET",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": []
-						},
-						"url": {
-							"raw": "http://localhost:8080/topic-api/v1/topics",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"topic-api",
-								"v1",
-								"topics"
-							]
-						}
-					},
-					"response": []
 				}
 			]
 		},
 		{
-			"name": "doc",
+			"name": "Doc",
 			"item": [
 				{
-					"name": "add doc",
+					"name": "addDoc",
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -182,7 +182,28 @@
 					"response": []
 				},
 				{
-					"name": "get pdf",
+					"name": "getAllDocs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/doc-api/v1/docs",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doc-api",
+								"v1",
+								"docs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getPdf",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
 					},
@@ -217,7 +238,7 @@
 					"response": []
 				},
 				{
-					"name": "get docx",
+					"name": "getDocx",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
 					},
@@ -252,28 +273,7 @@
 					"response": []
 				},
 				{
-					"name": "get all docs",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "http://localhost:8080/doc-api/v1/docs",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8080",
-							"path": [
-								"doc-api",
-								"v1",
-								"docs"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "rename doc",
+					"name": "renameDoc",
 					"request": {
 						"method": "PUT",
 						"header": [],
@@ -310,7 +310,7 @@
 					"response": []
 				},
 				{
-					"name": "replace file",
+					"name": "replaceFile",
 					"request": {
 						"method": "PUT",
 						"header": [],
@@ -347,7 +347,7 @@
 					"response": []
 				},
 				{
-					"name": "delete doc",
+					"name": "deleteDoc",
 					"request": {
 						"method": "DELETE",
 						"header": [],
@@ -372,6 +372,401 @@
 								"doc-api",
 								"v1",
 								"doc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deleteDocsByTopicId",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "topicId",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/doc-api/v1/docs/by-topicId",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"doc-api",
+								"v1",
+								"docs",
+								"by-topicId"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "IndexCard",
+			"item": [
+				{
+					"name": "addIndexCard",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "topicId",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "question",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "answer",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "answerImage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-card",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-card"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getIndexCardsByTopicId",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "topicId",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-cards",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-cards"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAnswerImage",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-card",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-card"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "setQuestion",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "question",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-card/question",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-card",
+								"question"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "setAnswer",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "answer",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-card/answer",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-card",
+								"answer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "setAnswerImage",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "answerImage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-card/answer-image",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-card",
+								"answer-image"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "removeAnswerImage",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-card/remove/answer-image",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-card",
+								"remove",
+								"answer-image"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "setMarked",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "isMarked",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-card/marked",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-card",
+								"marked"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deleteIndexCard",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/index-cardindex-cards/by-topicId",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								"index-cardindex-cards",
+								"by-topicId"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deleteIndexCardsByTopicId",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "topicId",
+									"value": "",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/index-card-api/v1/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"index-card-api",
+								"v1",
+								""
 							]
 						}
 					},
