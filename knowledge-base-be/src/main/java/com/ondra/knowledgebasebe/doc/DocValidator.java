@@ -1,6 +1,6 @@
 package com.ondra.knowledgebasebe.doc;
 
-import com.ondra.knowledgebasebe.exceptions.InvalidArgumentException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.InvalidArgumentException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 

@@ -1,9 +1,9 @@
 package com.ondra.knowledgebasebe.topic;
 
 import com.ondra.knowledgebasebe.doc.DocRepository;
-import com.ondra.knowledgebasebe.exceptions.ConstraintViolationException;
-import com.ondra.knowledgebasebe.exceptions.TopicNameAlreadyTakenException;
-import com.ondra.knowledgebasebe.exceptions.TopicNotFoundException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.ConstraintViolationException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.TopicNameAlreadyTakenException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.TopicNotFoundException;
 import com.ondra.knowledgebasebe.indexcard.IndexCardRepository;
 import org.springframework.stereotype.Service;
 

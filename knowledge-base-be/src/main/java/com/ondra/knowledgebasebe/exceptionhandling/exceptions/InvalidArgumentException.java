@@ -1,4 +1,4 @@
-package com.ondra.knowledgebasebe.exceptions;
+package com.ondra.knowledgebasebe.exceptionhandling.exceptions;
 
 public class InvalidArgumentException extends  RuntimeException {
 

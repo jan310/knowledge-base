@@ -1,4 +1,4 @@
-package com.ondra.knowledgebasebe.exceptions;
+package com.ondra.knowledgebasebe.exceptionhandling.exceptions;
 
 public class TopicNotFoundException extends RuntimeException {
     public TopicNotFoundException(String id) {

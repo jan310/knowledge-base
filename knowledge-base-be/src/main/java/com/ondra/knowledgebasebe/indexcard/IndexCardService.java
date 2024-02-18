@@ -1,8 +1,8 @@
 package com.ondra.knowledgebasebe.indexcard;
 
-import com.ondra.knowledgebasebe.exceptions.FileConversionException;
-import com.ondra.knowledgebasebe.exceptions.IndexCardNotFoundException;
-import com.ondra.knowledgebasebe.exceptions.TopicNotFoundException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.FileConversionException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.IndexCardNotFoundException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.TopicNotFoundException;
 import com.ondra.knowledgebasebe.topic.TopicRepository;
 import org.bson.types.Binary;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.ondra.knowledgebasebe.topic;
 
-import com.ondra.knowledgebasebe.exceptions.InvalidArgumentException;
+import com.ondra.knowledgebasebe.exceptionhandling.exceptions.InvalidArgumentException;
 import org.springframework.stereotype.Component;
 
 @Component
