@@ -1,6 +1,5 @@
 package com.ondra.knowledgebasebe.doc;
 
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +16,7 @@ import static org.springframework.http.HttpStatus.ACCEPTED;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.MediaType.APPLICATION_PDF_VALUE;
 
 @RestController
 @RequestMapping("/doc-api/v1")
@@ -43,7 +43,7 @@ public class DocController {
         return docService.getAllDocs();
     }
 
-    @GetMapping(value = "/doc/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/doc/pdf", produces = APPLICATION_PDF_VALUE)
     @ResponseStatus(OK)
     public byte[] getPdf(@RequestParam String id) {
         docValidator.validateId(id);
