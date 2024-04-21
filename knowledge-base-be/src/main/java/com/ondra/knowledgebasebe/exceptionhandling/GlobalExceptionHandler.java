@@ -1,13 +1,9 @@
 package com.ondra.knowledgebasebe.exceptionhandling;
 
-import com.ondra.knowledgebasebe.exceptionhandling.exceptions.ConstraintViolationException;
 import com.ondra.knowledgebasebe.exceptionhandling.exceptions.DocNameAlreadyTakenException;
 import com.ondra.knowledgebasebe.exceptionhandling.exceptions.DocNotFoundException;
 import com.ondra.knowledgebasebe.exceptionhandling.exceptions.FileConversionException;
-import com.ondra.knowledgebasebe.exceptionhandling.exceptions.IndexCardNotFoundException;
 import com.ondra.knowledgebasebe.exceptionhandling.exceptions.InvalidArgumentException;
-import com.ondra.knowledgebasebe.exceptionhandling.exceptions.TopicNameAlreadyTakenException;
-import com.ondra.knowledgebasebe.exceptionhandling.exceptions.TopicNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,19 +28,14 @@ public class GlobalExceptionHandler {
             " ) was rejected: " + ex.getMessage());
     }
 
-    @ExceptionHandler({DocNotFoundException.class, IndexCardNotFoundException.class, TopicNotFoundException.class})
+    @ExceptionHandler(DocNotFoundException.class)
     @ResponseStatus(NOT_FOUND)
     public void handleNotFoundExceptions(RuntimeException ex, HttpServletRequest request) {
         logger.warn("An incoming HTTP request (Method: " + request.getMethod() + " | Path: " + request.getRequestURI() +
             " ) was rejected: " + ex.getMessage());
     }
 
-    @ExceptionHandler({
-        ConstraintViolationException.class,
-        DocNameAlreadyTakenException.class,
-        FileConversionException.class,
-        TopicNameAlreadyTakenException.class
-    })
+    @ExceptionHandler({DocNameAlreadyTakenException.class, FileConversionException.class})
     @ResponseStatus(CONFLICT)
     public void handleConflictExceptions(RuntimeException ex, HttpServletRequest request) {
         logger.warn("An incoming HTTP request (Method: " + request.getMethod() + " | Path: " + request.getRequestURI() +

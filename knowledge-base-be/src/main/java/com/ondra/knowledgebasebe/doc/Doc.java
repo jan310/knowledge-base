@@ -9,14 +9,14 @@ public class Doc {
 
     @Id
     private final String id;
-    private final String topicId;
+    private final String userId;
     private final String name;
     private final Binary docxFile;
     private final Binary pdfFile;
 
-    public Doc(String id, String topicId, String name, Binary docxFile, Binary pdfFile) {
+    public Doc(String id, String userId, String name, Binary docxFile, Binary pdfFile) {
         this.id = id;
-        this.topicId = topicId;
+        this.userId = userId;
         this.name = name;
         this.docxFile = docxFile;
         this.pdfFile = pdfFile;
@@ -26,8 +26,8 @@ public class Doc {
         return id;
     }
 
-    public String getTopicId() {
-        return topicId;
+    public String getUserId() {
+        return userId;
     }
 
     public String getName() {
@@ -43,7 +43,7 @@ public class Doc {
     }
 
     public DocDto toDto() {
-        return new DocDto(id, topicId, name);
+        return new DocDto(id, userId, name);
     }
 
 }

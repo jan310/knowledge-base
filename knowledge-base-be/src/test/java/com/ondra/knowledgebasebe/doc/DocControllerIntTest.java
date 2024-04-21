@@ -71,7 +71,7 @@ class DocControllerIntTest extends BaseIntTest {
         MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
             .multipart("/doc-api/v1/doc")
             .file(mockMultipartFile)
-            .param("topicId", topicId)
+            .param("userId", topicId)
             .param("name", "Garbage Collector");
 
         mockMvc
@@ -82,7 +82,7 @@ class DocControllerIntTest extends BaseIntTest {
 
         List<Doc> docs = docRepository.findAll();
         assertEquals(1, docs.size());
-        assertEquals(topicId, docs.get(0).getTopicId());
+        assertEquals(topicId, docs.get(0).getUserId());
         assertEquals("Garbage Collector", docs.get(0).getName());
         assertEquals(new Binary(docxFileBytes), docs.get(0).getDocxFile());
         assertNotEquals(null, docs.get(0).getPdfFile());
@@ -197,7 +197,7 @@ class DocControllerIntTest extends BaseIntTest {
         List<Doc> docs = docRepository.findAll();
         assertEquals(1, docs.size());
         assertEquals(docId, docs.get(0).getId());
-        assertEquals(topicId, docs.get(0).getTopicId());
+        assertEquals(topicId, docs.get(0).getUserId());
         assertEquals("Garbage Collector", docs.get(0).getName());
         assertEquals(new Binary(docxFileBytes), docs.get(0).getDocxFile());
         assertNotEquals(null, docs.get(0).getPdfFile());
@@ -237,7 +237,7 @@ class DocControllerIntTest extends BaseIntTest {
 
         MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
             .delete("/doc-api/v1/docs/by-topicId")
-            .param("topicId", topic1Id);
+            .param("userId", topic1Id);
 
         mockMvc
             .perform(requestBuilder)

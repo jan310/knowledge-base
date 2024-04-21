@@ -8,19 +8,21 @@ import java.util.Optional;
 
 public interface DocRepository extends MongoRepository<Doc,String> {
 
-    boolean existsByName(String name);
+    boolean existsByUserIdAndName(String userId, String name);
 
-    boolean existsByTopicId(String topicId);
+    boolean existsByIdAndUserId(String id, String userId);
 
-    void deleteAllByTopicId(String topicId);
+    Optional<Doc> findByIdAndUserId(String id, String userId);
 
-    @Query(value = "{}", fields = "{ '_id': 1, 'topicId': 1, 'name': 1 }")
-    List<Doc> findAllAndExcludeBinaryData();
+    void deleteByIdAndUserId(String id, String userId);
 
-    @Query(value = "{ '_id': ?0 }", fields = "{ 'pdfFile': 1 }")
-    Optional<Doc> findPdfFileByDocId(String id);
+    @Query(value = "{ 'userId': ?0 }", fields = "{ '_id': 1, 'userId': 1, 'name': 1 }")
+    List<Doc> findAllByUserIdAndExcludeBinaryData(String userId);
 
-    @Query(value = "{ '_id': ?0 }", fields = "{ 'docxFile': 1 }")
-    Optional<Doc> findDocxFileByDocId(String id);
+    @Query(value = "{ '_id': ?0, 'userId': ?1 }", fields = "{ 'pdfFile': 1 }")
+    Optional<Doc> findPdfFileByDocIdAndUserId(String id, String userId);
+
+    @Query(value = "{ '_id': ?0, 'userId': ?1 }", fields = "{ 'docxFile': 1 }")
+    Optional<Doc> findDocxFileByDocIdAndUserId(String id, String userId);
 
 }

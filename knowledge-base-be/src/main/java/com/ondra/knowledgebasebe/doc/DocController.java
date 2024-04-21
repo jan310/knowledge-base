@@ -1,15 +1,21 @@
 package com.ondra.knowledgebasebe.doc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Base64;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.ACCEPTED;
@@ -19,7 +25,7 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.MediaType.APPLICATION_PDF_VALUE;
 
 @RestController
-@RequestMapping("/doc-api/v1")
+@RequestMapping("/api/v1/docs")
 public class DocController {
 
     private final DocValidator docValidator;
@@ -30,59 +36,98 @@ public class DocController {
         this.docService = docService;
     }
 
-    @PostMapping(value = "/doc")
+    @PostMapping
     @ResponseStatus(CREATED)
-    public DocDto addDoc(@RequestParam String topicId, @RequestParam String name, @RequestParam MultipartFile docxFile) {
-        docValidator.validateIdAndNameAndDocxFile(topicId, name, docxFile);
-        return docService.addDoc(topicId, name, docxFile);
+    public DocDto addDoc(
+        @RequestHeader("Authorization") String bearerToken,
+        @RequestParam String name,
+        @RequestParam MultipartFile docxFile
+    ) {
+        docValidator.validateName(name);
+        docValidator.validateDocxFile(docxFile);
+        String userId = getUserIdFromBearerToken(bearerToken);
+        return docService.addDoc(userId, name, docxFile);
     }
 
-    @GetMapping(value = "/docs")
+    @GetMapping
     @ResponseStatus(OK)
-    public List<DocDto> getAllDocs() {
-        return docService.getAllDocs();
+    public List<DocDto> getAllDocs(
+        @RequestHeader("Authorization") String bearerToken
+    ) {
+        String userId = getUserIdFromBearerToken(bearerToken);
+        return docService.getAllDocs(userId);
     }
 
-    @GetMapping(value = "/doc/pdf", produces = APPLICATION_PDF_VALUE)
+    @GetMapping(value = "/{id}/pdf", produces = APPLICATION_PDF_VALUE)
     @ResponseStatus(OK)
-    public byte[] getPdf(@RequestParam String id) {
+    public byte[] getPdf(
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable String id
+    ) {
         docValidator.validateId(id);
-        return docService.getPdf(id);
+        String userId = getUserIdFromBearerToken(bearerToken);
+        return docService.getPdf(id, userId);
     }
 
-    @GetMapping(value = "/doc/docx", produces = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    @GetMapping(value = "/{id}/docx", produces = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     @ResponseStatus(OK)
-    public byte[] getDocx(@RequestParam String id) {
+    public byte[] getDocx(
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable String id
+    ) {
         docValidator.validateId(id);
-        return docService.getDocx(id);
+        String userId = getUserIdFromBearerToken(bearerToken);
+        return docService.getDocx(id, userId);
     }
 
-    @PutMapping("/doc/name")
+    @PatchMapping("/{id}/rename")
     @ResponseStatus(ACCEPTED)
-    public DocDto renameDoc(@RequestParam String id, @RequestParam String name) {
-        docValidator.validateIdAndName(id, name);
-        return docService.renameDoc(id, name);
-    }
-
-    @PutMapping("/doc/docx")
-    @ResponseStatus(ACCEPTED)
-    public DocDto replaceFile(@RequestParam String id, @RequestParam MultipartFile docxFile) {
-        docValidator.validateIdAndDocxFile(id, docxFile);
-        return docService.replaceFile(id, docxFile);
-    }
-
-    @DeleteMapping(value = "/doc")
-    @ResponseStatus(NO_CONTENT)
-    public void deleteDoc(@RequestParam String id) {
+    public DocDto renameDoc(
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable String id,
+        @RequestParam String name
+    ) {
         docValidator.validateId(id);
-        docService.deleteDoc(id);
+        docValidator.validateName(name);
+        String userId = getUserIdFromBearerToken(bearerToken);
+        return docService.renameDoc(id, userId, name);
     }
 
-    @DeleteMapping(value = "/docs/by-topicId")
+    @PatchMapping("/{id}/replace-file")
+    @ResponseStatus(ACCEPTED)
+    public DocDto replaceFile(
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable String id,
+        @RequestParam MultipartFile docxFile
+    ) {
+        docValidator.validateId(id);
+        docValidator.validateDocxFile(docxFile);
+        String userId = getUserIdFromBearerToken(bearerToken);
+        return docService.replaceFile(id, userId, docxFile);
+    }
+
+    @DeleteMapping(value = "/{id}")
     @ResponseStatus(NO_CONTENT)
-    public void deleteDocsByTopicId(@RequestParam String topicId) {
-        docValidator.validateId(topicId);
-        docService.deleteDocsByTopicId(topicId);
+    public void deleteDoc(
+        @RequestHeader("Authorization") String bearerToken,
+        @PathVariable String id
+    ) {
+        docValidator.validateId(id);
+        String userId = getUserIdFromBearerToken(bearerToken);
+        docService.deleteDoc(id, userId);
+    }
+
+    private String getUserIdFromBearerToken(String bearerToken) {
+        String jwt = bearerToken.replace("Bearer ", "");
+        String jwtPayload = jwt.split("\\.")[1];
+        String decodedJwtPayload = new String(Base64.getDecoder().decode(jwtPayload));
+        JsonNode jsonNode;
+        try {
+            jsonNode = new ObjectMapper().readTree(decodedJwtPayload);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return jsonNode.path("sub").asText();
     }
 
 }
