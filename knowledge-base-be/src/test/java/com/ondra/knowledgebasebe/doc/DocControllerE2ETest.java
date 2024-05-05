@@ -11,7 +11,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -22,6 +21,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static com.ondra.knowledgebasebe.SecurityTestData.BEARER_TOKEN_USER_1;
+import static com.ondra.knowledgebasebe.SecurityTestData.BEARER_TOKEN_USER_2;
+import static com.ondra.knowledgebasebe.SecurityTestData.USER_ID_1;
+import static com.ondra.knowledgebasebe.SecurityTestData.USER_ID_2;
 import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.emptyString;
@@ -31,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Testcontainers
@@ -53,43 +55,6 @@ class DocControllerE2ETest {
     @DynamicPropertySource
     static void dynamicProperties(DynamicPropertyRegistry registry) {
         registry.add("gotenberg.port", gotenbergContainer::getFirstMappedPort);
-    }
-
-    //In order for this variable to be initialized correctly, the environment variables "CLIENT_ID_1" and
-    // "CLIENT_SECRET_1" must be set for the test run configuration.
-    private static final String bearerTokenUser1 = "Bearer " + getAccessToken(
-        System.getenv("CLIENT_ID_1"), System.getenv("CLIENT_SECRET_1")
-    );
-    private static final String userId1 = "32xSgSNZHBlvmDMyK8BUzg9ioA6BAgE0@clients";
-
-    //In order for this variable to be initialized correctly, the environment variables "CLIENT_ID_1" and
-    // "CLIENT_SECRET_1" must be set for the test run configuration.
-    private static final String bearerTokenUser2 = "Bearer " + getAccessToken(
-        System.getenv("CLIENT_ID_2"), System.getenv("CLIENT_SECRET_2")
-    );
-    private static final String userId2 = "3Vp2rfLvoBiLg1WFNuEoiDqdcIPoMggq@clients";
-
-    private static String getAccessToken(String clientId, String clientSecret) {
-        record GetAccessTokenRequestBody(String client_id, String client_secret, String audience, String grant_type) {}
-        record GetAccessTokenResponseBody(String access_token, String expires_in, String token_type) {}
-
-        var requestBody = new GetAccessTokenRequestBody(
-            clientId,
-            clientSecret,
-            "https://knowledge-base-api/",
-            "client_credentials"
-        );
-
-        RestClient restClient = RestClient.create();
-        var responseBody = restClient
-            .post()
-            .uri("https://jan-ondra.eu.auth0.com/oauth/token")
-            .contentType(APPLICATION_JSON)
-            .body(requestBody)
-            .retrieve()
-            .body(GetAccessTokenResponseBody.class);
-
-        return responseBody.access_token;
     }
 
     @Autowired
@@ -119,7 +84,7 @@ class DocControllerE2ETest {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
 
             String id = given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .multiPart("docxFile", "file.docx", docxFileBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .formParam("name", "Java")
                 .when()
@@ -128,7 +93,7 @@ class DocControllerE2ETest {
                 .assertThat()
                 .statusCode(201)
                 .body("$", hasKey("id"))
-                .body("userId", equalTo(userId1))
+                .body("userId", equalTo(USER_ID_1))
                 .body("name", equalTo("Java"))
                 .body("size()", equalTo(3))
                 .extract().body().jsonPath().getString("id");
@@ -136,7 +101,7 @@ class DocControllerE2ETest {
             List<Doc> docs = docRepository.findAll();
             assertEquals(1, docs.size());
             assertEquals(id, docs.getFirst().getId());
-            assertEquals(userId1, docs.getFirst().getUserId());
+            assertEquals(USER_ID_1, docs.getFirst().getUserId());
             assertEquals("Java", docs.getFirst().getName());
             assertEquals(new Binary(docxFileBytes), docs.getFirst().getDocxFile());
             assertNotEquals(null, docs.getFirst().getPdfFile());
@@ -146,10 +111,10 @@ class DocControllerE2ETest {
         void shouldNotCreateDocIfNameAlreadyExists() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes)));
+            docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes)));
 
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .multiPart("docxFile", "file.docx", docxFileBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .formParam("name", "Java")
                 .when()
@@ -172,25 +137,25 @@ class DocControllerE2ETest {
         void shouldOnlyReturnDocsOfRequestingUser() throws IOException {
             byte[] docxFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1)));
+            docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1)));
             byte[] docxFileBytes2 = Files.readAllBytes(Paths.get("src/test/resources/test2.docx"));
             byte[] pdfFileBytes2 = Files.readAllBytes(Paths.get("src/test/resources/test2.pdf"));
-            docRepository.save(new Doc(null, userId1, "Kotlin", new Binary(docxFileBytes2), new Binary(pdfFileBytes2)));
+            docRepository.save(new Doc(null, USER_ID_1, "Kotlin", new Binary(docxFileBytes2), new Binary(pdfFileBytes2)));
             byte[] docxFileBytes3 = Files.readAllBytes(Paths.get("src/test/resources/test3.docx"));
             byte[] pdfFileBytes3 = Files.readAllBytes(Paths.get("src/test/resources/test3.pdf"));
-            docRepository.save(new Doc(null, userId2, "Python", new Binary(docxFileBytes3), new Binary(pdfFileBytes3)));
+            docRepository.save(new Doc(null, USER_ID_2, "Python", new Binary(docxFileBytes3), new Binary(pdfFileBytes3)));
 
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .when()
                 .get("/api/v1/docs")
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .body("size()", equalTo(2))
-                .body("[0].userId", equalTo(userId1))
+                .body("[0].userId", equalTo(USER_ID_1))
                 .body("[0].name", equalTo("Java"))
-                .body("[1].userId", equalTo(userId1))
+                .body("[1].userId", equalTo(USER_ID_1))
                 .body("[1].name", equalTo("Kotlin"));
         }
 
@@ -203,10 +168,10 @@ class DocControllerE2ETest {
         void shouldReturnPdf() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             byte[] pdf = given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .when()
                 .get("/api/v1/docs/" + id + "/pdf")
                 .then()
@@ -221,7 +186,7 @@ class DocControllerE2ETest {
         @Test
         void shouldNotReturnPdfIfPdfDoesNotExist() {
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .when()
                 .get("/api/v1/docs/non-existent-id/pdf")
                 .then()
@@ -234,10 +199,10 @@ class DocControllerE2ETest {
         void shouldNotReturnPdfIfPdfDoesNotBelongToRequestingUser() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             given()
-                .header("Authorization", bearerTokenUser2)
+                .header("Authorization", BEARER_TOKEN_USER_2)
                 .when()
                 .get("/api/v1/docs/" + id + "/pdf")
                 .then()
@@ -255,10 +220,10 @@ class DocControllerE2ETest {
         void shouldReturnDocx() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             byte[] docx = given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .when()
                 .get("/api/v1/docs/" + id + "/docx")
                 .then()
@@ -273,7 +238,7 @@ class DocControllerE2ETest {
         @Test
         void shouldNotReturnDocxIfDocxDoesNotExist() {
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .when()
                 .get("/api/v1/docs/non-existent-id/docx")
                 .then()
@@ -286,10 +251,10 @@ class DocControllerE2ETest {
         void shouldNotReturnDocxIfDocxDoesNotBelongToRequestingUser() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             given()
-                .header("Authorization", bearerTokenUser2)
+                .header("Authorization", BEARER_TOKEN_USER_2)
                 .when()
                 .get("/api/v1/docs/" + id + "/docx")
                 .then()
@@ -307,10 +272,10 @@ class DocControllerE2ETest {
         void shouldRenameDoc() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .formParam("name", "Kotlin")
                 .when()
                 .patch("/api/v1/docs/" + id + "/rename")
@@ -318,14 +283,14 @@ class DocControllerE2ETest {
                 .assertThat()
                 .statusCode(202)
                 .body("$", hasKey("id"))
-                .body("userId", equalTo(userId1))
+                .body("userId", equalTo(USER_ID_1))
                 .body("name", equalTo("Kotlin"))
                 .body("size()", equalTo(3));
 
             List<Doc> docs = docRepository.findAll();
             assertEquals(1, docs.size());
             assertEquals(id, docs.getFirst().getId());
-            assertEquals(userId1, docs.getFirst().getUserId());
+            assertEquals(USER_ID_1, docs.getFirst().getUserId());
             assertEquals("Kotlin", docs.getFirst().getName());
             assertEquals(new Binary(docxFileBytes), docs.getFirst().getDocxFile());
             assertNotEquals(null, docs.getFirst().getPdfFile());
@@ -334,7 +299,7 @@ class DocControllerE2ETest {
         @Test
         void shouldNotRenameDocIfDocDoesNotExist() {
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .formParam("name", "Kotlin")
                 .when()
                 .patch("/api/v1/docs/non-existent-id/rename")
@@ -348,14 +313,14 @@ class DocControllerE2ETest {
         void shouldNotRenameDocIfDocWithSameNameAlreadyExists() throws IOException {
             byte[] docxFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1))).getId();
 
             byte[] docxFileBytes2 = Files.readAllBytes(Paths.get("src/test/resources/test2.docx"));
             byte[] pdfFileBytes2 = Files.readAllBytes(Paths.get("src/test/resources/test2.pdf"));
-            docRepository.save(new Doc(null, userId1, "Kotlin", new Binary(docxFileBytes2), new Binary(pdfFileBytes2)));
+            docRepository.save(new Doc(null, USER_ID_1, "Kotlin", new Binary(docxFileBytes2), new Binary(pdfFileBytes2)));
 
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .formParam("name", "Kotlin")
                 .when()
                 .patch("/api/v1/docs/" + id + "/rename")
@@ -367,7 +332,7 @@ class DocControllerE2ETest {
             List<Doc> docs = docRepository.findAll();
             assertEquals(2, docs.size());
             assertEquals(id, docs.getFirst().getId());
-            assertEquals(userId1, docs.getFirst().getUserId());
+            assertEquals(USER_ID_1, docs.getFirst().getUserId());
             assertEquals("Java", docs.getFirst().getName());
             assertEquals(new Binary(docxFileBytes1), docs.getFirst().getDocxFile());
             assertNotEquals(null, docs.getFirst().getPdfFile());
@@ -377,10 +342,10 @@ class DocControllerE2ETest {
         void shouldNotRenameDocIfDocDoesNotBelongToRequestingUser() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             given()
-                .header("Authorization", bearerTokenUser2)
+                .header("Authorization", BEARER_TOKEN_USER_2)
                 .formParam("name", "Kotlin")
                 .when()
                 .patch("/api/v1/docs/" + id + "/rename")
@@ -392,7 +357,7 @@ class DocControllerE2ETest {
             List<Doc> docs = docRepository.findAll();
             assertEquals(1, docs.size());
             assertEquals(id, docs.getFirst().getId());
-            assertEquals(userId1, docs.getFirst().getUserId());
+            assertEquals(USER_ID_1, docs.getFirst().getUserId());
             assertEquals("Java", docs.getFirst().getName());
             assertEquals(new Binary(docxFileBytes), docs.getFirst().getDocxFile());
             assertNotEquals(null, docs.getFirst().getPdfFile());
@@ -407,12 +372,12 @@ class DocControllerE2ETest {
         void shouldReplaceFile() throws IOException {
             byte[] docxFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1))).getId();
 
             byte[] docxFileBytes2 = Files.readAllBytes(Paths.get("src/test/resources/test2.docx"));
 
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .multiPart("docxFile", "file.docx", docxFileBytes2, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .formParam("name", "Java")
                 .when()
@@ -421,14 +386,14 @@ class DocControllerE2ETest {
                 .assertThat()
                 .statusCode(202)
                 .body("$", hasKey("id"))
-                .body("userId", equalTo(userId1))
+                .body("userId", equalTo(USER_ID_1))
                 .body("name", equalTo("Java"))
                 .body("size()", equalTo(3));
 
             List<Doc> docs = docRepository.findAll();
             assertEquals(1, docs.size());
             assertEquals(id, docs.getFirst().getId());
-            assertEquals(userId1, docs.getFirst().getUserId());
+            assertEquals(USER_ID_1, docs.getFirst().getUserId());
             assertEquals("Java", docs.getFirst().getName());
             assertEquals(new Binary(docxFileBytes2), docs.getFirst().getDocxFile());
             assertNotEquals(null, docs.getFirst().getPdfFile());
@@ -439,7 +404,7 @@ class DocControllerE2ETest {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test2.docx"));
 
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .multiPart("docxFile", "file.docx", docxFileBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .formParam("name", "Java")
                 .when()
@@ -457,12 +422,12 @@ class DocControllerE2ETest {
         void shouldNotReplaceFileIfDocDoesNotBelongToRequestingUser() throws IOException {
             byte[] docxFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes1 = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes1), new Binary(pdfFileBytes1))).getId();
 
             byte[] docxFileBytes2 = Files.readAllBytes(Paths.get("src/test/resources/test2.docx"));
 
             given()
-                .header("Authorization", bearerTokenUser2)
+                .header("Authorization", BEARER_TOKEN_USER_2)
                 .multiPart("docxFile", "file.docx", docxFileBytes2, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                 .formParam("name", "Java")
                 .when()
@@ -475,7 +440,7 @@ class DocControllerE2ETest {
             List<Doc> docs = docRepository.findAll();
             assertEquals(1, docs.size());
             assertEquals(id, docs.getFirst().getId());
-            assertEquals(userId1, docs.getFirst().getUserId());
+            assertEquals(USER_ID_1, docs.getFirst().getUserId());
             assertEquals("Java", docs.getFirst().getName());
             assertEquals(new Binary(docxFileBytes1), docs.getFirst().getDocxFile());
             assertNotEquals(null, docs.getFirst().getPdfFile());
@@ -490,10 +455,10 @@ class DocControllerE2ETest {
         void shouldDeleteDoc() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .when()
                 .delete("/api/v1/docs/" + id)
                 .then()
@@ -508,7 +473,7 @@ class DocControllerE2ETest {
         @Test
         void shouldNotDeleteDocIfDocDoesNotExist() {
             given()
-                .header("Authorization", bearerTokenUser1)
+                .header("Authorization", BEARER_TOKEN_USER_1)
                 .when()
                 .delete("/api/v1/docs/non-existent-id")
                 .then()
@@ -521,10 +486,10 @@ class DocControllerE2ETest {
         void shouldNotDeleteDocIfDocDoesNotBelongToRequestingUser() throws IOException {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
-            String id = docRepository.save(new Doc(null, userId1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
+            String id = docRepository.save(new Doc(null, USER_ID_1, "Java", new Binary(docxFileBytes), new Binary(pdfFileBytes))).getId();
 
             given()
-                .header("Authorization", bearerTokenUser2)
+                .header("Authorization", BEARER_TOKEN_USER_2)
                 .when()
                 .delete("/api/v1/docs/" + id)
                 .then()
@@ -535,7 +500,7 @@ class DocControllerE2ETest {
             List<Doc> docs = docRepository.findAll();
             assertEquals(1, docs.size());
             assertEquals(id, docs.getFirst().getId());
-            assertEquals(userId1, docs.getFirst().getUserId());
+            assertEquals(USER_ID_1, docs.getFirst().getUserId());
             assertEquals("Java", docs.getFirst().getName());
             assertEquals(new Binary(docxFileBytes), docs.getFirst().getDocxFile());
             assertNotEquals(null, docs.getFirst().getPdfFile());
