@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class DocService {
@@ -21,14 +20,14 @@ public class DocService {
 
     public DocDto addDoc(String userId, String name, MultipartFile docxFile) {
         if (docRepository.existsByUserIdAndName(userId, name)) throw new DocNameAlreadyTakenException(name, userId);
-        Binary docxBinary = fileConversionService.convertMultipartFileToBinary(docxFile);
+        Binary docxBinary = fileConversionService.convertDocxMultipartFileToDocxBinary(docxFile);
         Binary pdfBinary = fileConversionService.convertDocxMultipartFileToPdfBinary(docxFile);
         Doc doc = new Doc(null, userId, name, docxBinary, pdfBinary);
         return docRepository.save(doc).toDto();
     }
 
     public List<DocDto> getAllDocs(String userId) {
-        return docRepository.findAllByUserIdAndExcludeBinaryData(userId).stream().map(Doc::toDto).collect(Collectors.toList());
+        return docRepository.findAllByUserIdAndExcludeBinaryData(userId).stream().map(Doc::toDto).toList();
     }
 
     public byte[] getPdf(String id, String userId) {
@@ -49,7 +48,7 @@ public class DocService {
 
     public DocDto replaceFile(String id, String userId, MultipartFile docxFile) {
         Doc oldDoc = docRepository.findByIdAndUserId(id, userId).orElseThrow(() -> new DocNotFoundException(id, userId));
-        Binary docxBinary = fileConversionService.convertMultipartFileToBinary(docxFile);
+        Binary docxBinary = fileConversionService.convertDocxMultipartFileToDocxBinary(docxFile);
         Binary pdfBinary = fileConversionService.convertDocxMultipartFileToPdfBinary(docxFile);
         Doc newDoc = new Doc(id, userId, oldDoc.getName(), docxBinary, pdfBinary);
         return docRepository.save(newDoc).toDto();

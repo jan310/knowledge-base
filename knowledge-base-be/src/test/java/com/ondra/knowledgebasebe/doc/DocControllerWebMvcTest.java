@@ -3,7 +3,6 @@ package com.ondra.knowledgebasebe.doc;
 import com.ondra.knowledgebasebe.exceptionhandling.exceptions.DocNameAlreadyTakenException;
 import com.ondra.knowledgebasebe.exceptionhandling.exceptions.DocNotFoundException;
 import com.ondra.knowledgebasebe.exceptionhandling.exceptions.InvalidArgumentException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -42,37 +40,31 @@ class DocControllerWebMvcTest {
     @MockBean
     private DocService docService;
 
-    private static MockMultipartFile mockMultipartFile;
-
-    @BeforeAll
-    static void setup() throws IOException {
-        mockMultipartFile = new MockMultipartFile(
-            "docxFile",
-            "file.docx",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            Files.readAllBytes(Paths.get("src/test/resources/test1.docx"))
-        );
-    }
+    private static final String ID_1 = "1";
+    private static final String ID_2 = "2";
+    private static final String NAME_1 = "Java";
+    private static final String NAME_2 = "Kotlin";
+    private static final MockMultipartFile MULTIPART_FILE = new MockMultipartFile("docxFile", new byte[]{});
 
     @Nested
     class AddDoc {
 
         @Test
         void shouldReturnAddedDoc() throws Exception {
-            when(docService.addDoc(USER_ID_1, "Java", mockMultipartFile)).thenReturn(new DocDto("1", USER_ID_1, "Java"));
+            when(docService.addDoc(USER_ID_1, NAME_1, MULTIPART_FILE)).thenReturn(new DocDto(ID_1, USER_ID_1, NAME_1));
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
                 .multipart("/api/v1/docs")
-                .file(mockMultipartFile)
-                .param("name", "Java")
+                .file(MULTIPART_FILE)
+                .param("name", NAME_1)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
                 .perform(requestBuilder)
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.id").value(ID_1))
                 .andExpect(jsonPath("$.userId").value(USER_ID_1))
-                .andExpect(jsonPath("$.name").value("Java"));
+                .andExpect(jsonPath("$.name").value(NAME_1));
         }
 
         @Test
@@ -81,7 +73,7 @@ class DocControllerWebMvcTest {
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
                 .multipart("/api/v1/docs")
-                .file(mockMultipartFile)
+                .file(MULTIPART_FILE)
                 .param("name", "")
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
@@ -93,12 +85,12 @@ class DocControllerWebMvcTest {
 
         @Test
         void shouldReturnConflictIfNameIsAlreadyTaken() throws Exception {
-            doThrow(new DocNameAlreadyTakenException("Java", USER_ID_1)).when(docService).addDoc(USER_ID_1, "Java", mockMultipartFile);
+            doThrow(new DocNameAlreadyTakenException(NAME_1, USER_ID_1)).when(docService).addDoc(USER_ID_1, NAME_1, MULTIPART_FILE);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
                 .multipart("/api/v1/docs")
-                .file(mockMultipartFile)
-                .param("name", "Java")
+                .file(MULTIPART_FILE)
+                .param("name", NAME_1)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -115,8 +107,8 @@ class DocControllerWebMvcTest {
         @Test
         void shouldReturnAllDocs() throws Exception {
             List<DocDto> docs = new ArrayList<>();
-            docs.add(new DocDto("1", USER_ID_1, "Java"));
-            docs.add(new DocDto("2", USER_ID_1, "Kotlin"));
+            docs.add(new DocDto(ID_1, USER_ID_1, NAME_1));
+            docs.add(new DocDto(ID_2, USER_ID_1, NAME_2));
 
             when(docService.getAllDocs(USER_ID_1)).thenReturn(docs);
 
@@ -127,12 +119,12 @@ class DocControllerWebMvcTest {
             mockMvc
                 .perform(requestBuilder)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value("1"))
+                .andExpect(jsonPath("$[0].id").value(ID_1))
                 .andExpect(jsonPath("$[0].userId").value(USER_ID_1))
-                .andExpect(jsonPath("$[0].name").value("Java"))
-                .andExpect(jsonPath("$[1].id").value("2"))
+                .andExpect(jsonPath("$[0].name").value(NAME_1))
+                .andExpect(jsonPath("$[1].id").value(ID_2))
                 .andExpect(jsonPath("$[1].userId").value(USER_ID_1))
-                .andExpect(jsonPath("$[1].name").value("Kotlin"));
+                .andExpect(jsonPath("$[1].name").value(NAME_2));
         }
 
     }
@@ -144,10 +136,10 @@ class DocControllerWebMvcTest {
         void shouldReturnPdf() throws Exception {
             byte[] pdfFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.pdf"));
 
-            when(docService.getPdf("1", USER_ID_1)).thenReturn(pdfFileBytes);
+            when(docService.getPdf(ID_1, USER_ID_1)).thenReturn(pdfFileBytes);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .get("/api/v1/docs/1/pdf")
+                .get("/api/v1/docs/" + ID_1 + "/pdf")
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -159,10 +151,10 @@ class DocControllerWebMvcTest {
 
         @Test
         void shouldReturnNotFoundIfIdDoesNotExistForUser() throws Exception {
-            doThrow(new DocNotFoundException("1", USER_ID_1)).when(docService).getPdf("1", USER_ID_1);
+            doThrow(new DocNotFoundException(ID_1, USER_ID_1)).when(docService).getPdf(ID_1, USER_ID_1);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .get("/api/v1/docs/1/pdf")
+                .get("/api/v1/docs/" + ID_1 + "/pdf")
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -180,10 +172,10 @@ class DocControllerWebMvcTest {
         void shouldReturnDocx() throws Exception {
             byte[] docxFileBytes = Files.readAllBytes(Paths.get("src/test/resources/test1.docx"));
 
-            when(docService.getDocx("1", USER_ID_1)).thenReturn(docxFileBytes);
+            when(docService.getDocx(ID_1, USER_ID_1)).thenReturn(docxFileBytes);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .get("/api/v1/docs/1/docx")
+                .get("/api/v1/docs/" + ID_1 + "/docx")
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -195,10 +187,10 @@ class DocControllerWebMvcTest {
 
         @Test
         void shouldReturnNotFoundIfIdDoesNotExistForUser() throws Exception {
-            doThrow(new DocNotFoundException("1", USER_ID_1)).when(docService).getDocx("1", USER_ID_1);
+            doThrow(new DocNotFoundException(ID_1, USER_ID_1)).when(docService).getDocx(ID_1, USER_ID_1);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .get("/api/v1/docs/1/docx")
+                .get("/api/v1/docs/" + ID_1 + "/docx")
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -214,28 +206,28 @@ class DocControllerWebMvcTest {
 
         @Test
         void shouldReturnRenamedDoc() throws Exception {
-            when(docService.renameDoc("1", USER_ID_1, "Java")).thenReturn(new DocDto("1", USER_ID_1, "Java"));
+            when(docService.renameDoc(ID_1, USER_ID_1, NAME_1)).thenReturn(new DocDto(ID_1, USER_ID_1, NAME_1));
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .patch("/api/v1/docs/1/rename")
-                .param("name", "Java")
+                .patch("/api/v1/docs/" + ID_1 + "/rename")
+                .param("name", NAME_1)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
                 .perform(requestBuilder)
                 .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.id").value(ID_1))
                 .andExpect(jsonPath("$.userId").value(USER_ID_1))
-                .andExpect(jsonPath("$.name").value("Java"));
+                .andExpect(jsonPath("$.name").value(NAME_1));
         }
 
         @Test
         void shouldReturnConflictIfNameIsAlreadyTaken() throws Exception {
-            doThrow(new DocNameAlreadyTakenException("Java", USER_ID_1)).when(docService).renameDoc("1", USER_ID_1, "Java");
+            doThrow(new DocNameAlreadyTakenException(NAME_1, USER_ID_1)).when(docService).renameDoc(ID_1, USER_ID_1, NAME_1);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .patch("/api/v1/docs/1/rename")
-                .param("name", "Java")
+                .patch("/api/v1/docs/" + ID_1 + "/rename")
+                .param("name", NAME_1)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -251,28 +243,28 @@ class DocControllerWebMvcTest {
 
         @Test
         void shouldReturnDoc() throws Exception {
-            when(docService.replaceFile("1", USER_ID_1, mockMultipartFile)).thenReturn(new DocDto("1", USER_ID_1, "Java"));
+            when(docService.replaceFile(ID_1, USER_ID_1, MULTIPART_FILE)).thenReturn(new DocDto(ID_1, USER_ID_1, NAME_1));
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .multipart(PATCH ,"/api/v1/docs/1/replace-file")
-                .file(mockMultipartFile)
+                .multipart(PATCH ,"/api/v1/docs/" + ID_1 + "/replace-file")
+                .file(MULTIPART_FILE)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
                 .perform(requestBuilder)
                 .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.id").value(ID_1))
                 .andExpect(jsonPath("$.userId").value(USER_ID_1))
-                .andExpect(jsonPath("$.name").value("Java"));
+                .andExpect(jsonPath("$.name").value(NAME_1));
         }
 
         @Test
         void shouldReturnNotFoundIfIdDoesNotExistForUser() throws Exception {
-            doThrow(new DocNotFoundException("1", USER_ID_1)).when(docService).replaceFile("1", USER_ID_1, mockMultipartFile);
+            doThrow(new DocNotFoundException(ID_1, USER_ID_1)).when(docService).replaceFile(ID_1, USER_ID_1, MULTIPART_FILE);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .multipart(PATCH ,"/api/v1/docs/1/replace-file")
-                .file(mockMultipartFile)
+                .multipart(PATCH ,"/api/v1/docs/" + ID_1 + "/replace-file")
+                .file(MULTIPART_FILE)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -289,7 +281,7 @@ class DocControllerWebMvcTest {
         @Test
         void shouldReturnEmptyResponseBody() throws Exception {
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .delete("/api/v1/docs/1")
+                .delete("/api/v1/docs/" + ID_1)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc
@@ -300,10 +292,10 @@ class DocControllerWebMvcTest {
 
         @Test
         void shouldReturnNotFoundIfIdDoesNotExistForUser() throws Exception {
-            doThrow(new DocNotFoundException("1", USER_ID_1)).when(docService).deleteDoc("1", USER_ID_1);
+            doThrow(new DocNotFoundException(ID_1, USER_ID_1)).when(docService).deleteDoc(ID_1, USER_ID_1);
 
             MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders
-                .delete("/api/v1/docs/1")
+                .delete("/api/v1/docs/" + ID_1)
                 .header("Authorization", BEARER_TOKEN_USER_1);
 
             mockMvc

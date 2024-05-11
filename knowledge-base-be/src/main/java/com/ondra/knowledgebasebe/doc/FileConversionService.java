@@ -21,7 +21,7 @@ public class FileConversionService {
         this.restClient = restClient;
     }
 
-    public Binary convertMultipartFileToBinary(MultipartFile file) {
+    public Binary convertDocxMultipartFileToDocxBinary(MultipartFile file) {
         try {
             return new Binary(file.getBytes());
         } catch (IOException ex) {

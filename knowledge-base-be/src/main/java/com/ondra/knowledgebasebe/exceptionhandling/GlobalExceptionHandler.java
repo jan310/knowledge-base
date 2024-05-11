@@ -24,29 +24,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidArgumentException.class)
     @ResponseStatus(BAD_REQUEST)
     public void handleValidationExceptions(InvalidArgumentException ex, HttpServletRequest request) {
-        logger.info("An incoming HTTP request (Method: " + request.getMethod() + " | Path: " + request.getRequestURI() +
-            " ) was rejected: " + ex.getMessage());
+        logger.info(getLogMessage(request.getMethod(), request.getRequestURI(), ex.getMessage()));
     }
 
     @ExceptionHandler(DocNotFoundException.class)
     @ResponseStatus(NOT_FOUND)
     public void handleNotFoundExceptions(RuntimeException ex, HttpServletRequest request) {
-        logger.warn("An incoming HTTP request (Method: " + request.getMethod() + " | Path: " + request.getRequestURI() +
-            " ) was rejected: " + ex.getMessage());
+        logger.warn(getLogMessage(request.getMethod(), request.getRequestURI(), ex.getMessage()));
     }
 
     @ExceptionHandler({DocNameAlreadyTakenException.class, FileConversionException.class})
     @ResponseStatus(CONFLICT)
     public void handleConflictExceptions(RuntimeException ex, HttpServletRequest request) {
-        logger.warn("An incoming HTTP request (Method: " + request.getMethod() + " | Path: " + request.getRequestURI() +
-            " ) was rejected: " + ex.getMessage());
+        logger.warn(getLogMessage(request.getMethod(), request.getRequestURI(), ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(INTERNAL_SERVER_ERROR)
     public void handleOtherExceptions(Exception ex, HttpServletRequest request) {
-        logger.error("An incoming HTTP request (Method: " + request.getMethod() + " | Path: " + request.getRequestURI() +
-            " ) was rejected: " + ex.getMessage());
+        logger.error(getLogMessage(request.getMethod(), request.getRequestURI(), ex.getMessage()));
+    }
+
+    private String getLogMessage(String requestMethod, String requestPath, String message) {
+        return "An incoming HTTP request [" + requestMethod + " " + requestPath + "] was rejected: " + message;
     }
 
 }
