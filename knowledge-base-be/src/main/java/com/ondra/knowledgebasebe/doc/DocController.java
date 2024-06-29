@@ -3,6 +3,7 @@ package com.ondra.knowledgebasebe.doc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -26,6 +27,7 @@ import static org.springframework.http.MediaType.APPLICATION_PDF_VALUE;
 
 @RestController
 @RequestMapping("/api/v1/docs")
+@CrossOrigin(origins = "http://localhost:5173/")
 public class DocController {
 
     private final DocValidator docValidator;

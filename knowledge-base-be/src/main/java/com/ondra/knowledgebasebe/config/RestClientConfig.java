@@ -8,12 +8,15 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class RestClientConfig {
 
+    @Value("${gotenberg.host}")
+    private String gotenbergHost;
+
     @Value("${gotenberg.port}")
     private String gotenbergPort;
 
     @Bean
     RestClient restClient() {
-        return RestClient.builder().baseUrl("http://localhost:" + gotenbergPort).build();
+        return RestClient.builder().baseUrl("http://" + gotenbergHost + ":" + gotenbergPort).build();
     }
 
 }

@@ -9,11 +9,22 @@ services:
       - MONGO_INITDB_DATABASE=db
       - MONGO_INITDB_ROOT_USERNAME=username
       - MONGO_INITDB_ROOT_PASSWORD=password
-    #volumes:
-      #- ./mongodb:/data/db
+    volumes:
+      - ./mongodb:/data/db
 
   gotenberg:
     image: gotenberg/gotenberg:7.10
     container_name: gotenberg
     ports:
       - "3000:3000"
+
+  knowledge-base-be:
+    build:
+      dockerfile: ./knowledge-base-be/Dockerfile
+    image: knowledge-base-be
+    container_name: knowledge-base-be
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+      - gotenberg
