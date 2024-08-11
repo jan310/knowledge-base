@@ -15,8 +15,8 @@ public class RestClientConfig {
     private String gotenbergPort;
 
     @Bean
-    RestClient restClient() {
-        return RestClient.builder().baseUrl("http://" + gotenbergHost + ":" + gotenbergPort).build();
+    RestClient restClient(RestClient.Builder builder) {
+        return builder.baseUrl("http://" + gotenbergHost + ":" + gotenbergPort).build();
     }
 
 }

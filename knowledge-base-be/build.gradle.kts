@@ -16,17 +16,20 @@ repositories {
 }
 
 dependencies {
-    implementation("com.okta.spring:okta-spring-boot-starter:3.0.6")
+    implementation("com.okta.spring:okta-spring-boot-starter:3.0.7")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-web")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:junit-jupiter:1.19.7")
     testImplementation("org.testcontainers:mongodb:1.19.7")
     testImplementation("io.rest-assured:rest-assured:5.4.0")
+    testImplementation("org.wiremock:wiremock-standalone:3.9.1")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
     jvmArgs("-XX:+EnableDynamicAgentLoading")
+    environment("spring.profiles.active", "dev")
 }
